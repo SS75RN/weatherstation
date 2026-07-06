@@ -1,217 +1,118 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>KS3 Weather Investigation Dashboard</title>
-
+<title>Live Environmental Station</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    background: #f4f7fb;
-}
-
-header {
-    background: #1e3a8a;
-    color: white;
-    padding: 20px;
-    text-align: center;
-}
-
-.container {
-    padding: 20px;
-    max-width: 1100px;
-    margin: auto;
-}
+body { font-family: Arial; margin:0; background:#0f172a; color:white; }
+header { padding:20px; background:#1e293b; text-align:center; }
 
 .grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  padding:20px;
 }
 
 .card {
-    background: white;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background:#111827;
+  padding:15px;
+  border-radius:10px;
 }
 
-.big {
-    font-size: 28px;
-    font-weight: bold;
-}
-
-.small {
-    color: #555;
-}
-
-canvas {
-    width: 100% !important;
-    height: 300px !important;
-}
-
-.question-box {
-    background: #e0f2fe;
-    padding: 15px;
-    border-left: 5px solid #0284c7;
-    margin-top: 20px;
-}
+canvas { background:white; border-radius:10px; margin:20px; }
+.small { color:#94a3b8; }
 </style>
 </head>
 
 <body>
 
 <header>
-    <h1>🌍 KS3 Weather & Climate Investigation</h1>
-    <p>Explore real-time weather data from your school weather station</p>
+<h1>🌍 Live Environmental Station (KS3 Geography)</h1>
+<p class="small">Real-time data from school Enviro+ sensor</p>
 </header>
 
-<div class="container">
-
-<!-- LIVE DATA -->
 <div class="grid">
-    <div class="card">
-        <h2>🌡 Temperature</h2>
-        <div class="big" id="temp">--</div>
-        <div class="small">Current reading</div>
-    </div>
-
-    <div class="card">
-        <h2>💧 Humidity</h2>
-        <div class="big" id="humidity">--</div>
-        <div class="small">Relative humidity</div>
-    </div>
-
-    <div class="card">
-        <h2>🌬 Pressure</h2>
-        <div class="big" id="pressure">--</div>
-        <div class="small">hPa</div>
-    </div>
-
-    <div class="card">
-        <h2>🌧 Rainfall</h2>
-        <div class="big" id="rain">--</div>
-        <div class="small">mm today</div>
-    </div>
+  <div class="card">🌡 Temp<br><h2 id="temp">--</h2></div>
+  <div class="card">💧 Humidity<br><h2 id="hum">--</h2></div>
+  <div class="card">🌬 Pressure<br><h2 id="press">--</h2></div>
+  <div class="card">🌫 PM2.5<br><h2 id="pm">--</h2></div>
 </div>
 
-<!-- GRAPHS -->
-<div class="card" style="margin-top:20px;">
-    <h2>📊 Temperature Trend (24h)</h2>
-    <canvas id="tempChart"></canvas>
-</div>
-
-<div class="card" style="margin-top:20px;">
-    <h2>📉 Pressure Trend</h2>
-    <canvas id="pressureChart"></canvas>
-</div>
-
-<div class="card" style="margin-top:20px;">
-    <h2>🌧 Rainfall Over Time</h2>
-    <canvas id="rainChart"></canvas>
-</div>
-
-<!-- QUESTIONS -->
-<div class="question-box">
-    <h2>🧭 Geography Investigation</h2>
-    <ul>
-        <li>What pattern can you see in the temperature graph?</li>
-        <li>Does falling pressure link to rainfall?</li>
-        <li>When is the warmest time of day and why?</li>
-        <li>Is today’s weather typical for a UK summer day?</li>
-    </ul>
-</div>
-
-</div>
+<canvas id="tempChart"></canvas>
+<canvas id="pressChart"></canvas>
+<canvas id="pmChart"></canvas>
 
 <script>
-// ===============================
-// 🔌 CONNECT TO YOUR PICO DATA
-// ===============================
-// Replace this with your actual endpoint
-const API_URL = "https://YOUR-PICO-API-ENDPOINT/data";
 
-// Example fallback data (so it works immediately)
-let sample = {
-    temp: 12.4,
-    humidity: 78,
-    pressure: 1008,
-    rain: 2.1
-};
+const API = "https://ss75rn.github.io/weatherstation/data.json";
 
-// ===============================
-// LIVE DATA FUNCTION
-// ===============================
-async function fetchData() {
-    try {
-        let res = await fetch(API_URL);
-        let data = await res.json();
+// history arrays (builds over time)
+let tempData = [];
+let pressData = [];
+let pmData = [];
+let labels = [];
 
-        document.getElementById("temp").innerText = data.temp + " °C";
-        document.getElementById("humidity").innerText = data.humidity + " %";
-        document.getElementById("pressure").innerText = data.pressure + " hPa";
-        document.getElementById("rain").innerText = data.rain + " mm";
+async function update() {
 
-    } catch (e) {
-        console.log("Using sample data");
-        document.getElementById("temp").innerText = sample.temp + " °C";
-        document.getElementById("humidity").innerText = sample.humidity + " %";
-        document.getElementById("pressure").innerText = sample.pressure + " hPa";
-        document.getElementById("rain").innerText = sample.rain + " mm";
-    }
+  let res = await fetch(API + "?t=" + Date.now());
+  let d = await res.json();
+
+  // live values
+  document.getElementById("temp").innerText = d.temp + " °C";
+  document.getElementById("hum").innerText = d.humidity + " %";
+  document.getElementById("press").innerText = d.pressure + " hPa";
+  document.getElementById("pm").innerText = d.pm25 + " µg/m³";
+
+  // store history
+  let time = new Date().toLocaleTimeString();
+
+  labels.push(time);
+  tempData.push(d.temp);
+  pressData.push(d.pressure);
+  pmData.push(d.pm25);
+
+  if(labels.length > 20){
+    labels.shift();
+    tempData.shift();
+    pressData.shift();
+    pmData.shift();
+  }
+
+  tempChart.update();
+  pressChart.update();
+  pmChart.update();
 }
 
-// ===============================
-// CHARTS (replace with real arrays later)
-// ===============================
-
-// Temperature chart
-new Chart(document.getElementById("tempChart"), {
-    type: "line",
-    data: {
-        labels: ["00", "04", "08", "12", "16", "20"],
-        datasets: [{
-            label: "Temperature (°C)",
-            data: [8, 7, 10, 13, 14, 11],
-            borderColor: "#f97316",
-            fill: false
-        }]
-    }
+// CHARTS
+const tempChart = new Chart(document.getElementById("tempChart"), {
+  type:"line",
+  data:{
+    labels:labels,
+    datasets:[{label:"Temperature", data:tempData}]
+  }
 });
 
-// Pressure chart
-new Chart(document.getElementById("pressureChart"), {
-    type: "line",
-    data: {
-        labels: ["00", "04", "08", "12", "16", "20"],
-        datasets: [{
-            label: "Pressure (hPa)",
-            data: [1012, 1010, 1008, 1006, 1007, 1009],
-            borderColor: "#2563eb",
-            fill: false
-        }]
-    }
+const pressChart = new Chart(document.getElementById("pressChart"), {
+  type:"line",
+  data:{
+    labels:labels,
+    datasets:[{label:"Pressure", data:pressData}]
+  }
 });
 
-// Rainfall chart
-new Chart(document.getElementById("rainChart"), {
-    type: "bar",
-    data: {
-        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-        datasets: [{
-            label: "Rainfall (mm)",
-            data: [0, 2, 5, 1, 0, 3],
-            backgroundColor: "#38bdf8"
-        }]
-    }
+const pmChart = new Chart(document.getElementById("pmChart"), {
+  type:"line",
+  data:{
+    labels:labels,
+    datasets:[{label:"PM2.5", data:pmData}]
+  }
 });
 
-// Refresh live data
-fetchData();
-setInterval(fetchData, 60000);
+setInterval(update, 5000);
+update();
+
 </script>
 
 </body>

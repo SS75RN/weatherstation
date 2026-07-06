@@ -1,272 +1,201 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Live Environmental Station</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-<style>
-body {
-    font-family: 'Inter', sans-serif;
-    transition: background 1s ease;
-}
-
-/* atmospheric layer */
-.particles {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    background: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
-    background-size: 40px 40px;
-    animation: drift 40s linear infinite;
-    opacity: 0.25;
-}
-
-@keyframes drift {
-    from { transform: translateY(0); }
-    to { transform: translateY(-200px); }
-}
-
-/* smoother cards */
-.glass-card {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 1.5rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-}
-
-.glass-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 40px rgba(59,130,246,0.2);
-    border-color: rgba(59, 130, 246, 0.4);
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Station Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+    </style>
 </head>
-
 <body class="text-slate-100 min-h-screen flex flex-col justify-between">
 
-<div class="particles"></div>
-
-<!-- HEADER -->
-<header class="p-6 max-w-7xl mx-auto w-full flex justify-between items-center border-b border-slate-800">
-    <div class="flex items-center gap-3">
-        <i class="fa-solid fa-cloud-sun-rain text-3xl text-blue-400"></i>
-        <div>
-            <h1 class="text-2xl font-bold">Live Environmental Station</h1>
-            <p class="text-xs text-slate-400">KS3 Geography Investigation System</p>
+    <header class="p-6 max-w-7xl mx-auto w-full flex justify-between items-center border-b border-slate-800">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-cloud-sun-rain text-3xl text-blue-400"></i>
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">Live Weather Station</h1>
+                <p class="text-xs text-slate-400">Channel ID: 3419849</p>
+            </div>
         </div>
-    </div>
+        <div id="status-tag" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-full flex items-center gap-2 border border-emerald-500/20">
+            <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span> Fetching Live Data
+        </div>
+    </header>
 
-    <div id="status-tag" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-full flex items-center gap-2 border border-emerald-500/20">
-        <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        Live Sync
-    </div>
-</header>
+    <main class="max-w-7xl mx-auto w-full p-6 grid grid-cols-1 md:grid-cols-3 gap-6 flex-grow">
+        
+        <div class="glass-card p-6 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm font-semibold tracking-wider text-slate-400 uppercase">Temperature</p>
+                    <h2 id="temp-val" class="text-5xl font-extrabold mt-2 text-white">--°C</h2>
+                </div>
+                <div class="p-3 bg-orange-500/10 text-orange-400 rounded-xl">
+                    <i class="fa-solid fa-temperature-half text-2xl"></i>
+                </div>
+            </div>
+            <p class="text-xs text-slate-400 mt-4" id="temp-time">Last update: --</p>
+        </div>
 
-<!-- MAIN -->
-<main class="max-w-7xl mx-auto w-full p-6 grid grid-cols-1 md:grid-cols-3 gap-6 flex-grow">
+        <div class="glass-card p-6 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm font-semibold tracking-wider text-slate-400 uppercase">Humidity</p>
+                    <h2 id="humid-val" class="text-5xl font-extrabold mt-2 text-white">--%</h2>
+                </div>
+                <div class="p-3 bg-blue-500/10 text-blue-400 rounded-xl">
+                    <i class="fa-solid fa-droplet text-2xl"></i>
+                </div>
+            </div>
+            <p class="text-xs text-slate-400 mt-4" id="humid-time">Last update: --</p>
+        </div>
 
-    <!-- TEMP -->
-    <div class="glass-card p-6">
-        <p class="text-sm uppercase text-slate-400">Temperature</p>
-        <h2 id="temp-val" class="text-5xl font-extrabold mt-2">--°C</h2>
-        <p id="temp-time" class="text-xs text-slate-400 mt-4">--</p>
-    </div>
+        <div class="glass-card p-6 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm font-semibold tracking-wider text-slate-400 uppercase">Barometric Pressure</p>
+                    <h2 id="press-val" class="text-5xl font-extrabold mt-2 text-white">-- hPa</h2>
+                </div>
+                <div class="p-3 bg-purple-500/10 text-purple-400 rounded-xl">
+                    <i class="fa-solid fa-gauge text-2xl"></i>
+                </div>
+            </div>
+            <p class="text-xs text-slate-400 mt-4" id="press-time">Last update: --</p>
+        </div>
 
-    <!-- HUM -->
-    <div class="glass-card p-6">
-        <p class="text-sm uppercase text-slate-400">Humidity</p>
-        <h2 id="humid-val" class="text-5xl font-extrabold mt-2">--%</h2>
-        <p id="humid-time" class="text-xs text-slate-400 mt-4">--</p>
-    </div>
+        <div class="glass-card p-6 md:col-span-3">
+            <h3 class="text-lg font-semibold mb-4 text-slate-300">24-Hour Trends</h3>
+            <div class="h-64">
+                <canvas id="weatherChart"></canvas>
+            </div>
+        </div>
+    </main>
 
-    <!-- PRESS -->
-    <div class="glass-card p-6">
-        <p class="text-sm uppercase text-slate-400">Pressure</p>
-        <h2 id="press-val" class="text-5xl font-extrabold mt-2">-- hPa</h2>
-        <p id="press-time" class="text-xs text-slate-400 mt-4">--</p>
-    </div>
+    <footer class="p-6 text-center text-xs text-slate-500 max-w-7xl mx-auto w-full border-t border-slate-800">
+        Powered by MathWorks ThingSpeak API & Tailwind CSS
+    </footer>
 
-    <!-- INTERPRETATION -->
-    <div class="glass-card p-6 md:col-span-3">
-        <h3 class="text-lg font-semibold mb-2">🧠 Geography Interpretation</h3>
-        <p id="insight" class="text-slate-300"></p>
-    </div>
+    <script>
+        const CHANNEL_ID = '3422747';
+        const LIVE_URL = `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?results=1`;
+        const HISTORICAL_URL = `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?results=24`;
 
-    <!-- QUESTIONS -->
-    <div class="glass-card p-6 md:col-span-3">
-        <h3 class="text-lg font-semibold mb-2">🧭 KS3 Enquiry Questions</h3>
-        <ul id="questions" class="list-disc ml-6 text-slate-300 space-y-1"></ul>
-    </div>
+        let weatherChart;
 
-    <!-- CHART -->
-    <div class="glass-card p-6 md:col-span-3">
-        <h3 class="text-lg font-semibold mb-4">📊 24h Trends</h3>
-        <canvas id="weatherChart"></canvas>
-    </div>
+        async function fetchWeatherData() {
+            try {
+                // 1. Fetch Latest Entry for Cards
+                const liveResponse = await fetch(LIVE_URL);
+                const liveData = await liveResponse.json();
+                const latestFeed = liveData.feeds[0];
 
-</main>
-
-<script>
-
-const CHANNEL_ID = '3422747';
-const LIVE_URL = `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?results=1`;
-const HIST_URL = `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?results=24`;
-
-let chart;
-
-// 🌈 dynamic background
-function updateBackground(temp) {
-    if (temp < 5) {
-        document.body.style.background = "linear-gradient(135deg,#0f172a,#1e3a8a)";
-    } else if (temp < 15) {
-        document.body.style.background = "linear-gradient(135deg,#0f172a,#1e293b)";
-    } else {
-        document.body.style.background = "linear-gradient(135deg,#3b1d0f,#1e293b)";
-    }
-}
-
-// 🎨 colour logic
-function tempColor(t) {
-    if (t < 5) return "#60a5fa";
-    if (t < 15) return "#34d399";
-    return "#f97316";
-}
-
-// 🧠 interpretation
-function updateInsight(temp, pressure, humidity) {
-    let msg = "";
-
-    if (pressure < 1005) {
-        msg = "🌧 Low pressure suggests unsettled weather and possible rain.";
-    } else if (pressure > 1020) {
-        msg = "☀ High pressure suggests stable, dry conditions.";
-    } else {
-        msg = "🌤 Pressure is moderate — changeable conditions likely.";
-    }
-
-    if (humidity > 80) msg += " High humidity increases chance of cloud or rain.";
-
-    document.getElementById("insight").innerText = msg;
-}
-
-// 🧭 enquiry questions (AUTO-GENERATED)
-function generateQuestions(temp, pressure, humidity) {
-    let q = [];
-
-    if (temp > 20) q.push("Why is the temperature relatively high today?");
-    if (temp < 10) q.push("What factors might be causing low temperatures?");
-
-    if (pressure < 1005) q.push("How does low pressure influence rainfall patterns?");
-    if (pressure > 1020) q.push("Why does high pressure often lead to clear skies?");
-
-    if (humidity > 80) q.push("How does high humidity affect cloud formation?");
-
-    q.push("How do temperature, pressure and humidity interact?");
-    q.push("Is today's weather typical for a UK climate?");
-
-    const ul = document.getElementById("questions");
-    ul.innerHTML = "";
-    q.forEach(x => {
-        let li = document.createElement("li");
-        li.innerText = x;
-        ul.appendChild(li);
-    });
-}
-
-// 📊 chart
-function buildChart(labels, t, h) {
-
-    const ctx = document.getElementById("weatherChart");
-
-    if (chart) chart.destroy();
-
-    chart = new Chart(ctx, {
-        type: "line",
-        data: {
-            labels,
-            datasets: [
-                {
-                    label: "Temp",
-                    data: t,
-                    borderColor: "#f97316",
-                    tension: 0.4,
-                    pointRadius: 0
-                },
-                {
-                    label: "Humidity",
-                    data: h,
-                    borderColor: "#3b82f6",
-                    tension: 0.4,
-                    pointRadius: 0
+                if(latestFeed) {
+                    const formattedTime = new Date(latestFeed.created_at).toLocaleTimeString();
+                    
+                    // Update HTML fields (Adjust field1, field2, field3 map depending on your sensor schema)
+                    if(latestFeed.field1) document.getElementById('temp-val').innerText = `${parseFloat(latestFeed.field1).toFixed(1)}°C`;
+                    if(latestFeed.field2) document.getElementById('humid-val').innerText = `${parseFloat(latestFeed.field2).toFixed(0)}%`;
+                    if(latestFeed.field3) document.getElementById('press-val').innerText = `${parseFloat(latestFeed.field3).toFixed(0)} hPa`;
+                    
+                    document.getElementById('temp-time').innerText = `Last update: ${formattedTime}`;
+                    document.getElementById('humid-time').innerText = `Last update: ${formattedTime}`;
+                    document.getElementById('press-time').innerText = `Last update: ${formattedTime}`;
                 }
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { labels: { color: "#94a3b8" } } },
-            scales: {
-                x: { ticks: { color: "#64748b" } },
-                y: { ticks: { color: "#64748b" } }
+
+                // 2. Fetch last 24 results for the chart
+                const historyResponse = await fetch(HISTORICAL_URL);
+                const historyData = await historyResponse.json();
+                
+                const labels = [];
+                const tempDataset = [];
+                const humidDataset = [];
+
+                historyData.feeds.forEach(feed => {
+                    labels.push(new Date(feed.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+                    tempDataset.push(parseFloat(feed.field1));
+                    humidDataset.push(parseFloat(feed.field2));
+                });
+
+                updateChart(labels, tempDataset, humidDataset);
+                
+                // Update status flag
+                document.getElementById('status-tag').innerHTML = `<span class="h-2 w-2 rounded-full bg-emerald-400"></span> Synced`;
+
+            } catch (error) {
+                console.error("Error loading weather data:", error);
+                document.getElementById('status-tag').className = "text-xs bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-full flex items-center gap-2 border border-rose-500/20";
+                document.getElementById('status-tag').innerHTML = `Offline / Error`;
             }
         }
-    });
-}
 
-// 🔌 main loop
-async function update() {
+        function updateChart(labels, tempData, humidData) {
+            const ctx = document.getElementById('weatherChart').getContext('2d');
+            
+            if (weatherChart) {
+                weatherChart.destroy();
+            }
 
-    const live = await fetch(LIVE_URL).then(r => r.json());
-    const latest = live.feeds[0];
+            weatherChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Temperature (°C)',
+                            data: tempData,
+                            borderColor: '#f97316',
+                            backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Humidity (%)',
+                            data: humidData,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8' } } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#64748b' } },
+                        y: { position: 'left', ticks: { color: '#f97316' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y1: { position: 'right', ticks: { color: '#3b82f6' }, grid: { display: false } }
+                    }
+                }
+            });
+        }
 
-    const temp = parseFloat(latest.field1);
-    const hum = parseFloat(latest.field2);
-    const press = parseFloat(latest.field3);
-
-    // cards
-    document.getElementById("temp-val").innerText = temp + "°C";
-    document.getElementById("humid-val").innerText = hum + "%";
-    document.getElementById("press-val").innerText = press + " hPa";
-
-    document.getElementById("temp-val").style.color = tempColor(temp);
-
-    const time = new Date(latest.created_at).toLocaleTimeString();
-    document.getElementById("temp-time").innerText = time;
-    document.getElementById("humid-time").innerText = time;
-    document.getElementById("press-time").innerText = time;
-
-    updateBackground(temp);
-    updateInsight(temp, press, hum);
-    generateQuestions(temp, press, hum);
-
-    // history
-    const hist = await fetch(HIST_URL).then(r => r.json());
-
-    let labels = [];
-    let t = [];
-    let h = [];
-
-    hist.feeds.forEach(f => {
-        labels.push(new Date(f.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
-        t.push(parseFloat(f.field1));
-        h.push(parseFloat(f.field2));
-    });
-
-    buildChart(labels, t, h);
-}
-
-update();
-setInterval(update, 30000);
-
-</script>
-
+        // Initialize and poll every 30 seconds
+        fetchWeatherData();
+        setInterval(fetchWeatherData, 30000);
+    </script>
 </body>
 </html>

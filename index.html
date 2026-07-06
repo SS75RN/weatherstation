@@ -1,119 +1,201 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Live Environmental Station</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-body { font-family: Arial; margin:0; background:#0f172a; color:white; }
-header { padding:20px; background:#1e293b; text-align:center; }
-
-.grid {
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;
-  padding:20px;
-}
-
-.card {
-  background:#111827;
-  padding:15px;
-  border-radius:10px;
-}
-
-canvas { background:white; border-radius:10px; margin:20px; }
-.small { color:#94a3b8; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Weather Station Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+    </style>
 </head>
+<body class="text-slate-100 min-h-screen flex flex-col justify-between">
 
-<body>
+    <header class="p-6 max-w-7xl mx-auto w-full flex justify-between items-center border-b border-slate-800">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-cloud-sun-rain text-3xl text-blue-400"></i>
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">Live Weather Station</h1>
+                <p class="text-xs text-slate-400">Channel ID: 3419849</p>
+            </div>
+        </div>
+        <div id="status-tag" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-full flex items-center gap-2 border border-emerald-500/20">
+            <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span> Fetching Live Data
+        </div>
+    </header>
 
-<header>
-<h1>🌍 Live Environmental Station (KS3 Geography)</h1>
-<p class="small">Real-time data from school Enviro+ sensor</p>
-</header>
+    <main class="max-w-7xl mx-auto w-full p-6 grid grid-cols-1 md:grid-cols-3 gap-6 flex-grow">
+        
+        <div class="glass-card p-6 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm font-semibold tracking-wider text-slate-400 uppercase">Temperature</p>
+                    <h2 id="temp-val" class="text-5xl font-extrabold mt-2 text-white">--°C</h2>
+                </div>
+                <div class="p-3 bg-orange-500/10 text-orange-400 rounded-xl">
+                    <i class="fa-solid fa-temperature-half text-2xl"></i>
+                </div>
+            </div>
+            <p class="text-xs text-slate-400 mt-4" id="temp-time">Last update: --</p>
+        </div>
 
-<div class="grid">
-  <div class="card">🌡 Temp<br><h2 id="temp">--</h2></div>
-  <div class="card">💧 Humidity<br><h2 id="hum">--</h2></div>
-  <div class="card">🌬 Pressure<br><h2 id="press">--</h2></div>
-  <div class="card">🌫 PM2.5<br><h2 id="pm">--</h2></div>
-</div>
+        <div class="glass-card p-6 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm font-semibold tracking-wider text-slate-400 uppercase">Humidity</p>
+                    <h2 id="humid-val" class="text-5xl font-extrabold mt-2 text-white">--%</h2>
+                </div>
+                <div class="p-3 bg-blue-500/10 text-blue-400 rounded-xl">
+                    <i class="fa-solid fa-droplet text-2xl"></i>
+                </div>
+            </div>
+            <p class="text-xs text-slate-400 mt-4" id="humid-time">Last update: --</p>
+        </div>
 
-<canvas id="tempChart"></canvas>
-<canvas id="pressChart"></canvas>
-<canvas id="pmChart"></canvas>
+        <div class="glass-card p-6 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm font-semibold tracking-wider text-slate-400 uppercase">Barometric Pressure</p>
+                    <h2 id="press-val" class="text-5xl font-extrabold mt-2 text-white">-- hPa</h2>
+                </div>
+                <div class="p-3 bg-purple-500/10 text-purple-400 rounded-xl">
+                    <i class="fa-solid fa-gauge text-2xl"></i>
+                </div>
+            </div>
+            <p class="text-xs text-slate-400 mt-4" id="press-time">Last update: --</p>
+        </div>
 
-<script>
+        <div class="glass-card p-6 md:col-span-3">
+            <h3 class="text-lg font-semibold mb-4 text-slate-300">24-Hour Trends</h3>
+            <div class="h-64">
+                <canvas id="weatherChart"></canvas>
+            </div>
+        </div>
+    </main>
 
-const API = "https://ss75rn.github.io/weatherstation/data.json";
+    <footer class="p-6 text-center text-xs text-slate-500 max-w-7xl mx-auto w-full border-t border-slate-800">
+        Powered by MathWorks ThingSpeak API & Tailwind CSS
+    </footer>
 
-// history arrays (builds over time)
-let tempData = [];
-let pressData = [];
-let pmData = [];
-let labels = [];
+    <script>
+        const CHANNEL_ID = '3419849';
+        const LIVE_URL = `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?results=1`;
+        const HISTORICAL_URL = `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?results=24`;
 
-async function update() {
+        let weatherChart;
 
-  let res = await fetch(API + "?t=" + Date.now());
-  let d = await res.json();
+        async function fetchWeatherData() {
+            try {
+                // 1. Fetch Latest Entry for Cards
+                const liveResponse = await fetch(LIVE_URL);
+                const liveData = await liveResponse.json();
+                const latestFeed = liveData.feeds[0];
 
-  // live values
-  document.getElementById("temp").innerText = d.temp + " °C";
-  document.getElementById("hum").innerText = d.humidity + " %";
-  document.getElementById("press").innerText = d.pressure + " hPa";
-  document.getElementById("pm").innerText = d.pm25 + " µg/m³";
+                if(latestFeed) {
+                    const formattedTime = new Date(latestFeed.created_at).toLocaleTimeString();
+                    
+                    // Update HTML fields (Adjust field1, field2, field3 map depending on your sensor schema)
+                    if(latestFeed.field1) document.getElementById('temp-val').innerText = `${parseFloat(latestFeed.field1).toFixed(1)}°C`;
+                    if(latestFeed.field2) document.getElementById('humid-val').innerText = `${parseFloat(latestFeed.field2).toFixed(0)}%`;
+                    if(latestFeed.field3) document.getElementById('press-val').innerText = `${parseFloat(latestFeed.field3).toFixed(0)} hPa`;
+                    
+                    document.getElementById('temp-time').innerText = `Last update: ${formattedTime}`;
+                    document.getElementById('humid-time').innerText = `Last update: ${formattedTime}`;
+                    document.getElementById('press-time').innerText = `Last update: ${formattedTime}`;
+                }
 
-  // store history
-  let time = new Date().toLocaleTimeString();
+                // 2. Fetch last 24 results for the chart
+                const historyResponse = await fetch(HISTORICAL_URL);
+                const historyData = await historyResponse.json();
+                
+                const labels = [];
+                const tempDataset = [];
+                const humidDataset = [];
 
-  labels.push(time);
-  tempData.push(d.temp);
-  pressData.push(d.pressure);
-  pmData.push(d.pm25);
+                historyData.feeds.forEach(feed => {
+                    labels.push(new Date(feed.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+                    tempDataset.push(parseFloat(feed.field1));
+                    humidDataset.push(parseFloat(feed.field2));
+                });
 
-  if(labels.length > 20){
-    labels.shift();
-    tempData.shift();
-    pressData.shift();
-    pmData.shift();
-  }
+                updateChart(labels, tempDataset, humidDataset);
+                
+                // Update status flag
+                document.getElementById('status-tag').innerHTML = `<span class="h-2 w-2 rounded-full bg-emerald-400"></span> Synced`;
 
-  tempChart.update();
-  pressChart.update();
-  pmChart.update();
-}
+            } catch (error) {
+                console.error("Error loading weather data:", error);
+                document.getElementById('status-tag').className = "text-xs bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-full flex items-center gap-2 border border-rose-500/20";
+                document.getElementById('status-tag').innerHTML = `Offline / Error`;
+            }
+        }
 
-// CHARTS
-const tempChart = new Chart(document.getElementById("tempChart"), {
-  type:"line",
-  data:{
-    labels:labels,
-    datasets:[{label:"Temperature", data:tempData}]
-  }
-});
+        function updateChart(labels, tempData, humidData) {
+            const ctx = document.getElementById('weatherChart').getContext('2d');
+            
+            if (weatherChart) {
+                weatherChart.destroy();
+            }
 
-const pressChart = new Chart(document.getElementById("pressChart"), {
-  type:"line",
-  data:{
-    labels:labels,
-    datasets:[{label:"Pressure", data:pressData}]
-  }
-});
+            weatherChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Temperature (°C)',
+                            data: tempData,
+                            borderColor: '#f97316',
+                            backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Humidity (%)',
+                            data: humidData,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8' } } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#64748b' } },
+                        y: { position: 'left', ticks: { color: '#f97316' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y1: { position: 'right', ticks: { color: '#3b82f6' }, grid: { display: false } }
+                    }
+                }
+            });
+        }
 
-const pmChart = new Chart(document.getElementById("pmChart"), {
-  type:"line",
-  data:{
-    labels:labels,
-    datasets:[{label:"PM2.5", data:pmData}]
-  }
-});
-
-setInterval(update, 5000);
-update();
-
-</script>
-
+        // Initialize and poll every 30 seconds
+        fetchWeatherData();
+        setInterval(fetchWeatherData, 30000);
+    </script>
 </body>
 </html>

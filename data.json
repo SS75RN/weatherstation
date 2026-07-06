@@ -1,0 +1,28 @@
+import urequests
+import json
+import time
+import ubinascii
+
+API_URL = "https://your-site/data.json"
+
+def send_data(temp, humidity, pressure, pm25, pm10):
+
+    data = {
+        "temp": temp,
+        "humidity": humidity,
+        "pressure": pressure,
+        "pm25": pm25,
+        "pm10": pm10,
+        "timestamp": time.time()
+    }
+
+    payload = json.dumps(data)
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    try:
+        urequests.put(API_URL, data=payload, headers=headers)
+    except:
+        print("upload failed")
